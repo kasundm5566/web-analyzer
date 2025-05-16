@@ -16,7 +16,6 @@ import (
 
 type Server struct {
 	httpServer *http.Server
-	log        *logrus.Logger
 }
 
 // NewServer Creates a new server instance with the specified port and logger.
@@ -30,7 +29,6 @@ func NewServer(port string, log *logrus.Logger) *Server {
 			Addr:    ":" + port,
 			Handler: mux,
 		},
-		log: log,
 	}
 }
 
@@ -39,9 +37,9 @@ Start Starts the server.
 */
 func (s *Server) Start() {
 	go func() {
-		s.log.Infof("Server started successfully on port %s.", s.httpServer.Addr)
+		logger.Log.Infof("Server started successfully on port %s.", s.httpServer.Addr)
 		if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			s.log.WithError(err).Fatal("Failed to start the server")
+			logger.Log.WithError(err).Fatal("Failed to start the server")
 		}
 	}()
 }
@@ -50,22 +48,22 @@ func (s *Server) Start() {
 Shutdown Shuts down the server gracefully.
 */
 func (s *Server) Shutdown(ctx context.Context) {
-	s.log.Info("Shutting down server...")
+	logger.Log.Info("Shutting down server...")
 	if err := s.httpServer.Shutdown(ctx); err != nil {
-		s.log.WithError(err).Error("Error during server shutdown")
+		logger.Log.WithError(err).Error("Error during server shutdown")
 	}
-	s.log.Info("Server stopped gracefully.")
+	logger.Log.Info("Server stopped gracefully.")
 }
 
 func main() {
-	log := logger.ConfigureLogger()
+	logger.ConfigureLogger()
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	server := NewServer(port, log)
+	server := NewServer(port, logger.Log)
 
 	server.Start()
 

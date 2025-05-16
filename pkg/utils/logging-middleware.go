@@ -13,7 +13,7 @@ import (
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log := logger.ConfigureLogger()
+		log := logger.Log
 
 		// Log the incoming request
 		log.Infof("Request: Method=[%s], URL=[%s], RemoteAddr=[%s]", r.Method, r.URL.String(), r.RemoteAddr)
