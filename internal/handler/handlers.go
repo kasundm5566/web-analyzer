@@ -7,25 +7,11 @@ All the endpoints will be implemented here.
 import (
 	"encoding/json"
 	"net/http"
+	"web-analyzer/internal/model"
 )
 
 func RootHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "web/static/index.html")
-}
-
-type URLRequest struct {
-	URL string `json:"url"`
-}
-
-type URLResponse struct {
-	HtmlVersion               int      `json:"htmlVersion"`
-	PageTitle                 string   `json:"pageTitle"`
-	NumberOfHeadings          int      `json:"numberOfHeadings"`
-	NumberOfInternalLinks     int      `json:"numberOfInternalLinks"`
-	NumberOfExternalLinks     int      `json:"numberOfExternalLinks"`
-	NumberOfInaccessibleLinks int      `json:"numberOfInaccessibleLinks"`
-	InaccessibleLinks         []string `json:"inaccessibleLinks"`
-	ContainsLoginForm         bool     `json:"containsLoginForm"`
 }
 
 func PostURLHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,13 +20,13 @@ func PostURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req URLRequest
+	var req model.URLRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.URL == "" {
 		http.Error(w, "Invalid request: missing or empty 'url' field", http.StatusBadRequest)
 		return
 	}
 
-	response := URLResponse{
+	response := model.URLResponse{
 		HtmlVersion:               5,
 		PageTitle:                 "Sample Title",
 		NumberOfHeadings:          5,
