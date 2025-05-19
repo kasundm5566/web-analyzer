@@ -1,10 +1,13 @@
 package service
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"github.com/PuerkitoBio/goquery"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 	"web-analyzer/internal/model"
@@ -16,17 +19,21 @@ func AnalyzeUrl(urlStr string) (*model.UrlResponse, error) {
 
 	log.Infof("Analyzing the url: %s", urlStr)
 
-	// Fetch HTML content from the URL
-	response, err := http.Get(urlStr)
+	// Fetch HTML content as string
+	htmlStr, err := FetchHtmlContent(urlStr)
+	if err != nil {
+		log.Infof("Analyzing failed for the url: %s", urlStr)
+		return nil, err
+	}
+	response, err := AnalyzeHtmlContent(htmlStr, urlStr)
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("Analyzing completed successfully for the url: %s", urlStr)
+	return response, nil
+}
 
-	bodyBytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-	htmlStr := string(bodyBytes)
+func AnalyzeHtmlContent(htmlStr string, urlStr string) (*model.UrlResponse, error) {
 
 	// Load and parse
 	document, err := goquery.NewDocumentFromReader(strings.NewReader(htmlStr))
@@ -45,11 +52,7 @@ func AnalyzeUrl(urlStr string) (*model.UrlResponse, error) {
 	result.NumberOfHeadings = findHeadingsCount(*document)
 
 	// Login form detection
-	document.Find("form").Each(func(i int, s *goquery.Selection) {
-		if s.Find("input[type='password']").Length() > 0 {
-			result.ContainsLoginForm = true
-		}
-	})
+	result.ContainsLoginForm = ContainsLoginForm(*document)
 
 	// Analyze links
 	result, err = AnalyzeLinks(urlStr, *document, result)
@@ -57,9 +60,33 @@ func AnalyzeUrl(urlStr string) (*model.UrlResponse, error) {
 	// Detect HTML version (from raw HTML string)
 	result.HtmlVersion = DetectHtmlVersion(htmlStr)
 
-	log.Infof("Analyzing complete for the url: %s", urlStr)
-
 	return result, nil
+}
+
+func FetchHtmlContent(urlStr string) (string, error) {
+	response, err := http.Get(urlStr)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	bodyBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	htmlContent := string(bodyBytes)
+
+	// Save the HTML content to a file
+	urlHash := md5.Sum([]byte(urlStr))
+	fileName := hex.EncodeToString(urlHash[:]) + ".html"
+
+	err = os.WriteFile(fileName, bodyBytes, 0644)
+	if err != nil {
+		return "", err
+	}
+
+	return htmlContent, nil
 }
 
 func FindPageTitle(document goquery.Document) string {
@@ -75,6 +102,7 @@ func findHeadingsCount(document goquery.Document) int {
 	return totalHeadings
 }
 
+// TODO: Improve this detection logic
 func AnalyzeLinks(urlStr string, document goquery.Document, result *model.UrlResponse) (*model.UrlResponse, error) {
 	// Parse base Url
 	base, err := url.Parse(urlStr)
@@ -124,6 +152,7 @@ func ContainsString(list []string, target string) bool {
 	return false
 }
 
+// TODO: Improve this detection logic
 func DetectHtmlVersion(html string) int {
 	htmlLower := strings.ToLower(html)
 	switch {
@@ -136,4 +165,14 @@ func DetectHtmlVersion(html string) int {
 	default:
 		return 0
 	}
+}
+
+func ContainsLoginForm(document goquery.Document) bool {
+	hasLoginForm := false
+	document.Find("form").Each(func(i int, s *goquery.Selection) {
+		if s.Find("input[type='password']").Length() > 0 {
+			hasLoginForm = true
+		}
+	})
+	return hasLoginForm
 }
