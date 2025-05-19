@@ -8,36 +8,36 @@ import (
 	"encoding/json"
 	"net/http"
 	"web-analyzer/internal/model"
+	"web-analyzer/internal/service"
 )
 
 func RootHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "web/static/index.html")
 }
 
-func PostURLHandler(w http.ResponseWriter, r *http.Request) {
+func UrlAnalyzingHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var req model.URLRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.URL == "" {
+	var req model.UrlRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Url == "" {
 		http.Error(w, "Invalid request: missing or empty 'url' field", http.StatusBadRequest)
 		return
 	}
 
-	response := model.URLResponse{
-		HtmlVersion:               5,
-		PageTitle:                 "Sample Title",
-		NumberOfHeadings:          5,
-		NumberOfInternalLinks:     10,
-		NumberOfExternalLinks:     5,
-		NumberOfInaccessibleLinks: 2,
-		InaccessibleLinks:         []string{"http://example.com/broken-link1", "http://example.com/broken-link2"},
-		ContainsLoginForm:         true,
+	response, err := service.AnalyzeUrl(req.Url)
+	if err != nil {
+		http.Error(w, "Error processing URL", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	encodeError := json.NewEncoder(w).Encode(response)
+	if encodeError != nil {
+		http.Error(w, "Error processing URL", http.StatusInternalServerError)
+		return
+	}
 }

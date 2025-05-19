@@ -16,7 +16,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		log := logger.Log
 
 		// Log the incoming request
-		log.Infof("Request: Method=[%s], URL=[%s], RemoteAddr=[%s]", r.Method, r.URL.String(), r.RemoteAddr)
+		log.Infof("Request: Method=[%s], Url=[%s], RemoteAddr=[%s]", r.Method, r.URL.String(), r.RemoteAddr)
 
 		// Capture the response
 		rec := &responseRecorder{ResponseWriter: w, statusCode: http.StatusOK, body: &bytes.Buffer{}}
