@@ -10,31 +10,33 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 	"web-analyzer/internal/model"
 	"web-analyzer/pkg/logger"
 )
 
-func AnalyzeUrl(urlStr string) (*model.UrlResponse, error) {
+func AnalyzeWebPage(urlStr string) (*model.UrlResponse, error) {
 	log := logger.Log
 
 	log.Infof("Analyzing the url: %s", urlStr)
 
 	// Fetch HTML content as string along with the DOCTYPE string. ChromeDP only gives the HTML content.
-	htmlStr, err := FetchHtmlContent(urlStr)
+	htmlStr, err := FetchContentAsString(urlStr)
 	if err != nil {
-		log.Infof("Analyzing failed for the url: %s, error: %s", urlStr, err)
+		log.Errorf("Analyzing failed for the url: %s, error: %s", urlStr, err)
 		return nil, err
 	}
-	response, err := AnalyzeHtmlContent(htmlStr, urlStr)
+	response, err := AnalyzeContent(htmlStr, urlStr)
 	if err != nil {
+		log.Errorf("Analyzing failed for the url: %s, error: %s", urlStr, err)
 		return nil, err
 	}
 	log.Infof("Analyzing completed successfully for the url: %s", urlStr)
 	return response, nil
 }
 
-func AnalyzeHtmlContent(htmlStr string, urlStr string) (*model.UrlResponse, error) {
+func AnalyzeContent(htmlStr string, urlStr string) (*model.UrlResponse, error) {
 	log := logger.Log
 
 	// Load and parse
@@ -53,7 +55,7 @@ func AnalyzeHtmlContent(htmlStr string, urlStr string) (*model.UrlResponse, erro
 
 	// Headings count
 	log.Info("Extracting the headings count.")
-	result.NumberOfHeadings = findHeadingsCount(*document)
+	result.NumberOfHeadings = FindHeadingsCount(*document)
 
 	// Login form detection
 	log.Info("Extracting the login form.")
@@ -70,7 +72,7 @@ func AnalyzeHtmlContent(htmlStr string, urlStr string) (*model.UrlResponse, erro
 	return result, nil
 }
 
-func FetchHtmlContent(urlStr string) (string, error) {
+func FetchContentAsString(urlStr string) (string, error) {
 	log := logger.Log
 
 	urlHash := md5.Sum([]byte(urlStr))
@@ -118,7 +120,7 @@ func FindPageTitle(document goquery.Document) string {
 	return document.Find("title").Text()
 }
 
-func findHeadingsCount(document goquery.Document) int {
+func FindHeadingsCount(document goquery.Document) int {
 	totalHeadings := 0
 	for i := 1; i <= 6; i++ {
 		tag := "h" + string('0'+i)
@@ -127,7 +129,6 @@ func findHeadingsCount(document goquery.Document) int {
 	return totalHeadings
 }
 
-// TODO: Improve this detection logic
 func AnalyzeLinks(urlStr string, document goquery.Document, result *model.UrlResponse) (*model.UrlResponse, error) {
 	// Parse base Url
 	base, err := url.Parse(urlStr)
@@ -137,6 +138,14 @@ func AnalyzeLinks(urlStr string, document goquery.Document, result *model.UrlRes
 
 	// Link analysis
 	linksFound := []string{} //  This is to keep track of links already found to avoid duplicate counts.
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	client := http.Client{Timeout: 3 * time.Second}
+
+	semaphore := make(chan struct{}, 10)
+
 	document.Find("a[href]").Each(func(i int, s *goquery.Selection) {
 		href, exists := s.Attr("href")
 		if !exists || href == "" || ContainsString(linksFound, href) {
@@ -155,16 +164,28 @@ func AnalyzeLinks(urlStr string, document goquery.Document, result *model.UrlRes
 			result.NumberOfExternalLinks++
 		}
 
-		client := http.Client{Timeout: 3 * time.Second}
-		req, _ := http.NewRequest("HEAD", resolved.String(), nil)
-		req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; WebAnalyzer/1.0)")
+		wg.Add(1)
+		go func(resolved *url.URL) {
+			defer wg.Done()
 
-		resp, err := client.Do(req)
-		if err != nil || resp.StatusCode >= 400 {
-			result.NumberOfInaccessibleLinks++
-			result.InaccessibleLinks = append(result.InaccessibleLinks, resolved.String())
-		}
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			req, _ := http.NewRequest("HEAD", resolved.String(), nil)
+			req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; WebAnalyzer/1.0)")
+			logger.Log.Infof("Accessing URL: %s", resolved)
+			resp, err := client.Do(req)
+			if err != nil || resp.StatusCode >= 400 {
+				logger.Log.Warnf("Failed accessing URL: %s", resolved)
+				mu.Lock()
+				result.NumberOfInaccessibleLinks++
+				result.InaccessibleLinks = append(result.InaccessibleLinks, resolved.String())
+				mu.Unlock()
+			}
+			logger.Log.Infof("Accessed URL successfully: %s", resolved)
+		}(resolved)
 	})
+	wg.Wait()
 	return result, nil
 }
 

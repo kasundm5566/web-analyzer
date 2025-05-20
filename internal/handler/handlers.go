@@ -15,7 +15,7 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "web/static/index.html")
 }
 
-func UrlAnalyzingHandler(w http.ResponseWriter, r *http.Request) {
+func WebPageAnalyzingHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
@@ -27,7 +27,7 @@ func UrlAnalyzingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := service.AnalyzeUrl(req.Url)
+	response, err := service.AnalyzeWebPage(req.Url)
 	if err != nil {
 		http.Error(w, "Error processing URL", http.StatusInternalServerError)
 		return
