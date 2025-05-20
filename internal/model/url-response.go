@@ -1,7 +1,7 @@
 package model
 
 type UrlResponse struct {
-	HtmlVersion               int      `json:"htmlVersion"`
+	HtmlVersion               string   `json:"htmlVersion"`
 	PageTitle                 string   `json:"pageTitle"`
 	NumberOfHeadings          int      `json:"numberOfHeadings"`
 	NumberOfInternalLinks     int      `json:"numberOfInternalLinks"`

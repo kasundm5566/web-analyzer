@@ -1,10 +1,11 @@
 package service
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"github.com/PuerkitoBio/goquery"
-	"io"
+	"github.com/chromedp/chromedp"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,10 +20,10 @@ func AnalyzeUrl(urlStr string) (*model.UrlResponse, error) {
 
 	log.Infof("Analyzing the url: %s", urlStr)
 
-	// Fetch HTML content as string
+	// Fetch HTML content as string along with the DOCTYPE string. ChromeDP only gives the HTML content.
 	htmlStr, err := FetchHtmlContent(urlStr)
 	if err != nil {
-		log.Infof("Analyzing failed for the url: %s", urlStr)
+		log.Infof("Analyzing failed for the url: %s, error: %s", urlStr, err)
 		return nil, err
 	}
 	response, err := AnalyzeHtmlContent(htmlStr, urlStr)
@@ -34,6 +35,7 @@ func AnalyzeUrl(urlStr string) (*model.UrlResponse, error) {
 }
 
 func AnalyzeHtmlContent(htmlStr string, urlStr string) (*model.UrlResponse, error) {
+	log := logger.Log
 
 	// Load and parse
 	document, err := goquery.NewDocumentFromReader(strings.NewReader(htmlStr))
@@ -46,47 +48,70 @@ func AnalyzeHtmlContent(htmlStr string, urlStr string) (*model.UrlResponse, erro
 	}
 
 	// Page title
+	log.Info("Extracting the title.")
 	result.PageTitle = FindPageTitle(*document)
 
 	// Headings count
+	log.Info("Extracting the headings count.")
 	result.NumberOfHeadings = findHeadingsCount(*document)
 
 	// Login form detection
+	log.Info("Extracting the login form.")
 	result.ContainsLoginForm = ContainsLoginForm(*document)
 
 	// Analyze links
+	log.Info("Analyzing links.")
 	result, err = AnalyzeLinks(urlStr, *document, result)
 
 	// Detect HTML version (from raw HTML string)
+	log.Info("Finding the HTML version.")
 	result.HtmlVersion = DetectHtmlVersion(htmlStr)
 
 	return result, nil
 }
 
 func FetchHtmlContent(urlStr string) (string, error) {
-	response, err := http.Get(urlStr)
-	if err != nil {
-		return "", err
-	}
-	defer response.Body.Close()
+	log := logger.Log
 
-	bodyBytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		return "", err
-	}
-
-	htmlContent := string(bodyBytes)
-
-	// Save the HTML content to a file
 	urlHash := md5.Sum([]byte(urlStr))
-	fileName := hex.EncodeToString(urlHash[:]) + ".html"
+	fileName := hex.EncodeToString(urlHash[:])
 
-	err = os.WriteFile(fileName, bodyBytes, 0644)
+	if _, err := os.Stat(fileName); err == nil {
+		log.Infof("Found cache file: %s", fileName)
+		content, err := os.ReadFile(fileName)
+		if err != nil {
+			return "", err
+		}
+		return string(content), nil
+	}
+
+	ctx, cancel := chromedp.NewContext(context.Background())
+	defer cancel()
+
+	ctx, cancel = context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	var renderedHtml string
+	var docType string
+	err := chromedp.Run(ctx,
+		chromedp.Navigate(urlStr),
+		chromedp.WaitReady("body"),
+		chromedp.Evaluate(`document.doctype ? '<!DOCTYPE ' + document.doctype.name + '>' : ''`, &docType),
+		chromedp.OuterHTML("html", &renderedHtml),
+	)
 	if err != nil {
 		return "", err
 	}
 
-	return htmlContent, nil
+	fullHtml := docType + "\n" + renderedHtml
+
+	err = os.WriteFile(fileName, []byte(fullHtml), 0644)
+	if err != nil {
+		return "", err
+	}
+	log.Infof("Created cache file: %s", fileName)
+
+	return fullHtml, nil
 }
 
 func FindPageTitle(document goquery.Document) string {
@@ -152,18 +177,17 @@ func ContainsString(list []string, target string) bool {
 	return false
 }
 
-// TODO: Improve this detection logic
-func DetectHtmlVersion(html string) int {
-	htmlLower := strings.ToLower(html)
+func DetectHtmlVersion(docType string) string {
+	htmlLower := strings.ToLower(docType)
 	switch {
 	case strings.Contains(htmlLower, "<!doctype html>"):
-		return 5
-	case strings.Contains(htmlLower, "xhtml 1.0"):
-		return 10
+		return "HTML5"
 	case strings.Contains(htmlLower, "html 4.01"):
-		return 4
+		return "HTML 4.01"
+	case strings.Contains(htmlLower, "xhtml 1.0"):
+		return "XHTML 1.0"
 	default:
-		return 0
+		return "Unknown"
 	}
 }
 
