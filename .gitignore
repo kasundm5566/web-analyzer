@@ -23,3 +23,5 @@ go.work
 # IntelliJ IDEA generated files
 .idea
 *.iml
+
+cache

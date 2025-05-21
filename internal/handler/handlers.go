@@ -16,12 +16,13 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func WebPageAnalyzingHandler(w http.ResponseWriter, r *http.Request) {
+	
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var req model.UrlRequest
+	var req model.AnalyzeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Url == "" {
 		http.Error(w, "Invalid request: missing or empty 'url' field", http.StatusBadRequest)
 		return

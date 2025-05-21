@@ -16,7 +16,7 @@ import (
 	"web-analyzer/pkg/logger"
 )
 
-func AnalyzeWebPage(urlStr string) (*model.UrlResponse, error) {
+func AnalyzeWebPage(urlStr string) (*model.AnalyzeResponse, error) {
 	log := logger.Log
 
 	log.Infof("Analyzing the url: %s", urlStr)
@@ -36,7 +36,7 @@ func AnalyzeWebPage(urlStr string) (*model.UrlResponse, error) {
 	return response, nil
 }
 
-func AnalyzeContent(htmlStr string, urlStr string) (*model.UrlResponse, error) {
+func AnalyzeContent(htmlStr string, urlStr string) (*model.AnalyzeResponse, error) {
 	log := logger.Log
 
 	// Load and parse
@@ -45,7 +45,7 @@ func AnalyzeContent(htmlStr string, urlStr string) (*model.UrlResponse, error) {
 		return nil, err
 	}
 
-	result := &model.UrlResponse{
+	result := &model.AnalyzeResponse{
 		InaccessibleLinks: make([]string, 0),
 	}
 
@@ -75,8 +75,16 @@ func AnalyzeContent(htmlStr string, urlStr string) (*model.UrlResponse, error) {
 func FetchContentAsString(urlStr string) (string, error) {
 	log := logger.Log
 
+	cacheDir := "cache"
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		err = os.Mkdir(cacheDir, 0755)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	urlHash := md5.Sum([]byte(urlStr))
-	fileName := hex.EncodeToString(urlHash[:])
+	fileName := cacheDir + string(os.PathSeparator) + hex.EncodeToString(urlHash[:])
 
 	if _, err := os.Stat(fileName); err == nil {
 		log.Infof("Found cache file: %s", fileName)
@@ -129,7 +137,7 @@ func FindHeadingsCount(document goquery.Document) int {
 	return totalHeadings
 }
 
-func AnalyzeLinks(urlStr string, document goquery.Document, result *model.UrlResponse) (*model.UrlResponse, error) {
+func AnalyzeLinks(urlStr string, document goquery.Document, result *model.AnalyzeResponse) (*model.AnalyzeResponse, error) {
 	// Parse base Url
 	base, err := url.Parse(urlStr)
 	if err != nil {
