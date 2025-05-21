@@ -131,13 +131,15 @@ func FindPageTitle(document goquery.Document) string {
 func FindHeadingsCount(document goquery.Document) int {
 	totalHeadings := 0
 	for i := 1; i <= 6; i++ {
-		tag := "h" + string('0'+i)
+		tag := "h" + string(rune('0'+i))
 		totalHeadings += document.Find(tag).Length()
 	}
 	return totalHeadings
 }
 
 func AnalyzeLinks(urlStr string, document goquery.Document, result *model.AnalyzeResponse) (*model.AnalyzeResponse, error) {
+	log := logger.ConfigureLogger()
+
 	// Parse base Url
 	base, err := url.Parse(urlStr)
 	if err != nil {
@@ -181,16 +183,16 @@ func AnalyzeLinks(urlStr string, document goquery.Document, result *model.Analyz
 
 			req, _ := http.NewRequest("HEAD", resolved.String(), nil)
 			req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; WebAnalyzer/1.0)")
-			logger.Log.Infof("Accessing URL: %s", resolved)
+			log.Infof("Accessing URL: %s", resolved)
 			resp, err := client.Do(req)
 			if err != nil || resp.StatusCode >= 400 {
-				logger.Log.Warnf("Failed accessing URL: %s", resolved)
+				log.Warnf("Failed accessing URL: %s", resolved)
 				mu.Lock()
 				result.InaccessibleLinksCount++
 				result.InaccessibleLinks = append(result.InaccessibleLinks, resolved.String())
 				mu.Unlock()
 			}
-			logger.Log.Infof("Accessed URL successfully: %s", resolved)
+			log.Infof("Accessed URL successfully: %s", resolved)
 		}(resolved)
 	})
 	wg.Wait()
