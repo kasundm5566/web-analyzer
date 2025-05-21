@@ -55,7 +55,7 @@ func AnalyzeContent(htmlStr string, urlStr string) (*model.AnalyzeResponse, erro
 
 	// Headings count
 	log.Info("Extracting the headings count.")
-	result.NumberOfHeadings = FindHeadingsCount(*document)
+	result.HeadingsCount = FindHeadingsCount(*document)
 
 	// Login form detection
 	log.Info("Extracting the login form.")
@@ -167,9 +167,9 @@ func AnalyzeLinks(urlStr string, document goquery.Document, result *model.Analyz
 		linksFound = append(linksFound, href)
 
 		if resolved.Host == base.Host || strings.HasPrefix(href, "/") || strings.HasPrefix(href, "#") {
-			result.NumberOfInternalLinks++
+			result.InternalLinksCount++
 		} else {
-			result.NumberOfExternalLinks++
+			result.ExternalLinksCount++
 		}
 
 		wg.Add(1)
@@ -186,7 +186,7 @@ func AnalyzeLinks(urlStr string, document goquery.Document, result *model.Analyz
 			if err != nil || resp.StatusCode >= 400 {
 				logger.Log.Warnf("Failed accessing URL: %s", resolved)
 				mu.Lock()
-				result.NumberOfInaccessibleLinks++
+				result.InaccessibleLinksCount++
 				result.InaccessibleLinks = append(result.InaccessibleLinks, resolved.String())
 				mu.Unlock()
 			}
