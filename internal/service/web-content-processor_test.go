@@ -33,6 +33,9 @@ func TestAnalyzeLinks(t *testing.T) {
 		<a href="https://example.com/test.html">External Link</a>
 		<a href="/internal">Internal Link</a>
 		<a href="https://abc.com">Internal Link</a>
+		<a href="mailto:abc@example.com">Internal Link</a>
+		<a href="tel:123456789">Internal Link</a>
+		<a href="ftp://ftp.example.com/file.txt">Internal Link</a>
 	</body></html>`
 	doc, _ := goquery.NewDocumentFromReader(strings.NewReader(html))
 

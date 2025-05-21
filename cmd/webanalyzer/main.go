@@ -17,6 +17,7 @@ type Server struct {
 func NewServer(port string, log *logrus.Logger) *Server {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.HandlerFunc(handler.RootHandler))
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 	mux.Handle("/analyze-url", utils.CORSMiddleware(utils.LoggingMiddleware(http.HandlerFunc(handler.WebPageAnalyzingHandler))))
 
 	return &Server{

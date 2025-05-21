@@ -165,6 +165,11 @@ func AnalyzeLinks(urlStr string, document goquery.Document, result *model.Analyz
 		if err != nil {
 			return
 		}
+
+		if link.Scheme != "" && link.Scheme != "http" && link.Scheme != "https" {
+			return
+		}
+
 		resolved := base.ResolveReference(link)
 		linksFound = append(linksFound, href)
 
