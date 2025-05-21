@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"web-analyzer/internal/model"
 	"web-analyzer/internal/service"
+	"web-analyzer/pkg/utils"
 )
 
 func RootHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,15 +17,15 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func WebPageAnalyzingHandler(w http.ResponseWriter, r *http.Request) {
-	
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var req model.AnalyzeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Url == "" {
-		http.Error(w, "Invalid request: missing or empty 'url' field", http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Url == "" || !utils.IsValidURL(req.Url) {
+		http.Error(w, "Invalid request: invalid url. It should start with http:// or https://.", http.StatusBadRequest)
 		return
 	}
 
