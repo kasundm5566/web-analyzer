@@ -16,7 +16,7 @@ The app is built using GoLang.
 ## Prerequisites
 
 - Go 1.24.3 or later
-- Latest version of Google Chrome (make sure the path to Chrome is added to the path in environment variables)
+- Latest version of the Google Chrome (make sure the path to Chrome is added to the path in environment variables)
 
 ---
 
@@ -35,39 +35,49 @@ in the `.env` file or environment variables (Windows).
 
 * ### Using GO
 
-  * #### Clone the repository:
+    * #### Clone the repository:
 
-    `git clone https://github.com/kasundm5566/web-analyzer.git`
-  
-    `cd web-analyzer`
+      `git clone https://github.com/kasundm5566/web-analyzer.git`
 
-  * #### Install Go dependencies:
+      `cd web-analyzer`
 
-    `go mod tidy`
+    * #### Install Go dependencies:
 
-  * #### Run the application:
+      `go mod tidy`
 
-    `go run main.go`
+    * #### Run the application:
 
-    Access the web interface at http://localhost:8080
+      `go run main.go`
+
+      Access the web interface at http://localhost:8080
 
 * ### Using the Makefile
 
-  * #### Clone the repository:
+    * #### Clone the repository:
 
-    `git clone https://github.com/kasundm5566/web-analyzer.git`
-    
-    `cd web-analyzer`
+      `git clone https://github.com/kasundm5566/web-analyzer.git`
 
-  * #### Build the application
+      `cd web-analyzer`
 
-    `make build`
+    * #### Build the application
 
-  * #### Run the application
+      `make build`
 
-    `make run`
+    * #### Run the application
 
-    Access the web interface at http://localhost:8080
+      `make run`
+
+      Access the web interface at http://localhost:8080
+
+---
+
+## Sample cURL of the endpoint to analyze a webpage
+
+`curl --location 'localhost:8080/analyze-url' \
+--header 'Content-Type: application/json' \
+--data '{
+    "url": "https://maze.co/guides/content-testing/"
+}'`
 
 ---
 
@@ -98,7 +108,10 @@ in the `.env` file or environment variables (Windows).
 - Add support for analyzing multiple pages in parallel.
 - Implement a more sophisticated method for detecting login forms.
 - Add support for analyzing other types of content (e.g., images, videos, etc.).
+- Add authentication mechanism to the endpoint.
 
 ---
 
 ## Demo
+
+https://1drv.ms/v/c/b4cceae27e0e7904/EcPK44xmIKRKh088yt0jb8wByOPa0mSxskoMTQ0I3zsa_w?e=ndQKBX
