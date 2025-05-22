@@ -31,7 +31,7 @@ func NewServer(port string, log *logrus.Logger) *Server {
 func main() {
 	logger.ConfigureLogger()
 
-	port := os.Getenv("PORT")
+	port := os.Getenv("WEB_ANALYZER_PORT")
 	if port == "" {
 		port = "8080"
 	}

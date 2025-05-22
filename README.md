@@ -16,7 +16,7 @@ The app is built using GoLang.
 ## Prerequisites
 
 - Go 1.24.3 or later
-- Latest version of Google Chrome
+- Latest version of Google Chrome (make sure the path to Chrome is added to the path in environment variables)
 
 ---
 
@@ -30,21 +30,44 @@ The app is built using GoLang.
 
 ## Setup
 
-### Clone the repository:
+The default server port is 8080. You can change it by modifying the `WEB_ANALYZER_PORT` environment variable
+in the `.env` file or environment variables (Windows).
 
-`git clone https://github.com/kasundm5566/web-analyzer.git`
+* ### Using GO
 
-`cd web-analyzer`
+  * #### Clone the repository:
 
-### Install Go dependencies:
+    `git clone https://github.com/kasundm5566/web-analyzer.git`
+  
+    `cd web-analyzer`
 
-`go mod tidy`
+  * #### Install Go dependencies:
 
-### Run the application:
+    `go mod tidy`
 
-`go run main.go`
+  * #### Run the application:
 
-Access the web interface at http://localhost:8080.
+    `go run main.go`
+
+    Access the web interface at http://localhost:8080
+
+* ### Using the Makefile
+
+  * #### Clone the repository:
+
+    `git clone https://github.com/kasundm5566/web-analyzer.git`
+    
+    `cd web-analyzer`
+
+  * #### Build the application
+
+    `make build`
+
+  * #### Run the application
+
+    `make run`
+
+    Access the web interface at http://localhost:8080
 
 ---
 
@@ -55,6 +78,7 @@ Access the web interface at http://localhost:8080.
   servers.
 - The detection of the HTML version is based on the DOCTYPE string and may not be accurate for non-standard pages.
 - The results may not be accurate for complex webpages with dynamic content or heavy JavaScript usage or iframes.
+- The application is only tested on Windows. It may need some modifications to run on other operating systems.
 
 ---
 
