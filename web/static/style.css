@@ -1,21 +1,21 @@
 body {
     font-family: sans-serif;
-    max-width: 600px;
-    margin: 40px auto;
-    padding: 20px;
+    max-width: 40%;
+    margin: 5vh auto;
+    padding: 2rem;
     background: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 0.5rem;
+    box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
 }
 
 label, input, button {
     display: block;
     width: 100%;
-    margin-bottom: 16px;
+    margin-bottom: 1rem;
 }
 
 button {
-    padding: 10px;
+    padding: 0.625rem;
     background-color: #007bff;
     border: none;
     color: white;
@@ -25,7 +25,7 @@ button {
 
 pre {
     background: #eee;
-    padding: 16px;
-    white-space: pre-wrap;
+    padding: 1rem;
+    white-space: collapse;
     word-wrap: break-word;
 }

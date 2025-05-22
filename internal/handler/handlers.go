@@ -31,7 +31,7 @@ func WebPageAnalyzingHandler(w http.ResponseWriter, r *http.Request) {
 
 	response, err := service.AnalyzeWebPage(req.Url)
 	if err != nil {
-		http.Error(w, "Error processing URL", http.StatusInternalServerError)
+		http.Error(w, "Error processing URL. "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -39,7 +39,7 @@ func WebPageAnalyzingHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	encodeError := json.NewEncoder(w).Encode(response)
 	if encodeError != nil {
-		http.Error(w, "Error processing URL", http.StatusInternalServerError)
+		http.Error(w, "Error processing URL. "+encodeError.Error(), http.StatusInternalServerError)
 		return
 	}
 }

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Web Analyzer</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/script.js"></script>
 </head>
 <body>
 <h1>Web Analyzer</h1>
@@ -17,48 +18,6 @@
     <h3>Analysis Result</h3>
     <pre id="result"></pre>
 </div>
-
-<script>
-    async function analyzeUrl() {
-        const urlInput = document.getElementById("urlInput");
-        const resultBox = document.getElementById("result");
-        const url = urlInput.value.trim();
-
-        resultBox.textContent = "🔍 Analyzing...";
-        resultBox.style.color = "black";
-
-        if (!url) {
-            resultBox.textContent = "❌ Please enter a URL.";
-            resultBox.style.color = "red";
-            return;
-        }
-
-        try {
-            const response = await fetch("http://localhost:8080/analyze-url", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({url})
-            });
-
-            // Handle non-200 responses
-            if (!response.ok) {
-                const errorText = await response.text();
-                resultBox.textContent = `❌ Error ${response.status}: ${errorText}`;
-                resultBox.style.color = "red";
-                return;
-            }
-
-            const data = await response.json();
-            resultBox.textContent = JSON.stringify(data, null, 2);
-            resultBox.style.color = "black";
-        } catch (err) {
-            resultBox.textContent = `❌ Network or server error: ${err.message}`;
-            resultBox.style.color = "red";
-        }
-    }
-</script>
 
 </body>
 </html>

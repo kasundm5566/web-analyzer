@@ -87,7 +87,7 @@ func FetchContentAsString(urlStr string) (string, error) {
 	fileName := cacheDir + string(os.PathSeparator) + hex.EncodeToString(urlHash[:])
 
 	if _, err := os.Stat(fileName); err == nil {
-		log.Infof("Found cache file: %s", fileName)
+		log.Infof("Found cache file: %s for the url: %s", fileName, urlStr)
 		content, err := os.ReadFile(fileName)
 		if err != nil {
 			return "", err
