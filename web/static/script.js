@@ -57,12 +57,15 @@ function displayResult(data) {
     `;
 }
 
-function login() {
+async function login() {
     const usernameInput = document.getElementById("username");
     const passwordInput = document.getElementById("password");
 
     const usernameError = document.getElementById("usernameError");
     const passwordError = document.getElementById("passwordError");
+    const loginError = document.getElementById("loginError");
+    loginError.style.visibility = "hidden";
+    loginError.style.color = "red";
 
     const username = usernameInput.value.trim();
     const password = passwordInput.value.trim();
@@ -82,5 +85,23 @@ function login() {
         return;
     } else {
         passwordError.style.visibility = "hidden";
+    }
+
+    try {
+        const response = await fetch("http://localhost:8080/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({username, password})
+        });
+
+        if (response.ok) {
+            window.location.replace("/analyze.html");
+        } else {
+            loginError.style.visibility = "visible";
+        }
+    } catch (err) {
+        alert(`❌ Network or server error: ${err.message}`);
     }
 }

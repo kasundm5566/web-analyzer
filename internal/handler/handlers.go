@@ -6,7 +6,9 @@ All the endpoints will be implemented here.
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"net/http"
+	"time"
 	"web-analyzer/internal/model"
 	"web-analyzer/internal/service"
 	"web-analyzer/pkg/utils"
@@ -14,6 +16,10 @@ import (
 
 func RootHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "web/static/login.html")
+}
+
+func AnalyzePageHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "web/static/analyze.html")
 }
 
 func WebPageAnalyzingHandler(w http.ResponseWriter, r *http.Request) {
@@ -60,6 +66,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	response := model.LoginResponse{}
 
 	if loginService.ValidateCredentials(req.Username, req.Password) {
+		http.SetCookie(w, &http.Cookie{
+			Name:     "web_analyzer_session_token",
+			Value:    uuid.New().String(),
+			Expires:  time.Now().Add(1 * time.Hour),
+			HttpOnly: true,
+		})
 		response.Status = "success"
 		w.WriteHeader(http.StatusOK)
 	} else {

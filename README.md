@@ -115,12 +115,17 @@ Sample response:
 
 ## Login
 
+![login.png](login.png)
+
 Please use the following credentials to login to the application.
+Once logged in, a session will be created and will be expired after an hour.
 
 ```text
 username: user
 password: password
 ```
+
+![cookie.png](cookie.png)
 
 ---
 
