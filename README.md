@@ -113,6 +113,17 @@ Sample response:
 
 ---
 
+## Login
+
+Please use the following credentials to login to the application.
+
+```text
+username: user
+password: password
+```
+
+---
+
 ## Limitations
 
 - The application relies on Google Chrome for rendering webpages, which may increase resource usage.
