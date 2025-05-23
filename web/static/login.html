@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/script.js"></script>
+</head>
+<body>
+<h1>Login</h1>
+
+<label for="username">Username:</label>
+<input type="text" id="username">
+<label id="usernameError" class="lblError"></label>
+
+<br>
+
+<label for="password">Password:</label>
+<input type="password" id="password">
+<label id="passwordError" class="lblError"></label>
+
+<br>
+<button onclick="login()">Login</button>
+<label id="loginError" class="lblError">❌ Incorrect username or password.</label>
+
+</body>
+</html>

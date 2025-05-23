@@ -5,6 +5,7 @@ go 1.24
 require (
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/chromedp/chromedp v0.13.6
+	github.com/google/uuid v1.6.0
 	github.com/sirupsen/logrus v1.9.3
 )
 

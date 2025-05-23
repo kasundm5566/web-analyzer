@@ -56,3 +56,52 @@ function displayResult(data) {
         <p><strong>Contains Login Form:</strong> ${data.containsLoginForm ? "Yes" : "No"}</p>
     `;
 }
+
+async function login() {
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+
+    const usernameError = document.getElementById("usernameError");
+    const passwordError = document.getElementById("passwordError");
+    const loginError = document.getElementById("loginError");
+    loginError.style.visibility = "hidden";
+    loginError.style.color = "red";
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username) {
+        usernameError.style.visibility = "visible";
+        usernameError.textContent = "❌ Please enter username.";
+        usernameError.style.color = "red";
+        return;
+    } else {
+        usernameError.style.visibility = "hidden";
+    }
+    if (!password) {
+        passwordError.style.visibility = "visible";
+        passwordError.textContent = "❌ Please enter password.";
+        passwordError.style.color = "red";
+        return;
+    } else {
+        passwordError.style.visibility = "hidden";
+    }
+
+    try {
+        const response = await fetch("http://localhost:8080/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({username, password})
+        });
+
+        if (response.ok) {
+            window.location.replace("/analyze.html");
+        } else {
+            loginError.style.visibility = "visible";
+        }
+    } catch (err) {
+        alert(`❌ Network or server error: ${err.message}`);
+    }
+}
