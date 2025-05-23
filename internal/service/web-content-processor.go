@@ -138,70 +138,88 @@ func FindHeadingsCount(document goquery.Document) int {
 }
 
 func AnalyzeLinks(urlStr string, document goquery.Document, result *model.AnalyzeResponse) (*model.AnalyzeResponse, error) {
-	log := logger.ConfigureLogger()
 
-	// Parse base Url
+	// Parse base URL
 	base, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, err
 	}
 
-	// Link analysis
-	linksFound := []string{} //  This is to keep track of links already found to avoid duplicate counts.
+	links, err := findAndCategorizeLinks(base, document, result)
+	if err != nil {
+		return nil, err
+	}
 
-	var wg sync.WaitGroup
-	var mu sync.Mutex
+	checkLinkAccessibility(links, result)
 
-	client := http.Client{Timeout: 3 * time.Second}
+	return result, nil
+}
 
-	semaphore := make(chan struct{}, 10)
+func findAndCategorizeLinks(base *url.URL, document goquery.Document, result *model.AnalyzeResponse) ([]*url.URL, error) {
+	linksFound := make(map[string]struct{}) // Use a map to avoid duplicates
+	var links []*url.URL
 
 	document.Find("a[href]").Each(func(i int, s *goquery.Selection) {
 		href, exists := s.Attr("href")
-		if !exists || href == "" || ContainsString(linksFound, href) {
-			return
-		}
-		link, err := url.Parse(href)
-		if err != nil {
+		if !exists || href == "" {
 			return
 		}
 
-		if link.Scheme != "" && link.Scheme != "http" && link.Scheme != "https" {
+		if _, found := linksFound[href]; found {
+			return
+		}
+
+		link, err := url.Parse(href)
+		if err != nil || (link.Scheme != "" && link.Scheme != "http" && link.Scheme != "https") {
 			return
 		}
 
 		resolved := base.ResolveReference(link)
-		linksFound = append(linksFound, href)
+		linksFound[href] = struct{}{}
+		links = append(links, resolved)
 
 		if resolved.Host == base.Host || strings.HasPrefix(href, "/") || strings.HasPrefix(href, "#") {
 			result.InternalLinksCount++
 		} else {
 			result.ExternalLinksCount++
 		}
+	})
 
+	return links, nil
+}
+
+func checkLinkAccessibility(links []*url.URL, result *model.AnalyzeResponse) {
+	log := logger.ConfigureLogger()
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	client := http.Client{Timeout: 3 * time.Second}
+	semaphore := make(chan struct{}, 10)
+
+	for _, link := range links {
 		wg.Add(1)
-		go func(resolved *url.URL) {
+		go func(link *url.URL) {
 			defer wg.Done()
-
 			semaphore <- struct{}{}
 			defer func() { <-semaphore }()
 
-			req, _ := http.NewRequest("HEAD", resolved.String(), nil)
+			req, _ := http.NewRequest("HEAD", link.String(), nil)
 			req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; WebAnalyzer/1.0)")
-			log.Infof("Accessing URL: %s", resolved)
+			log.Infof("Accessing URL: %s", link)
 			resp, err := client.Do(req)
 			if err != nil || resp.StatusCode >= 400 {
-				log.Warnf("Failed accessing URL: %s", resolved)
+				log.Warnf("Failed accessing URL: %s", link)
 				mu.Lock()
 				result.InaccessibleLinksCount++
-				result.InaccessibleLinks = append(result.InaccessibleLinks, resolved.String())
+				result.InaccessibleLinks = append(result.InaccessibleLinks, link.String())
 				mu.Unlock()
+			} else {
+				log.Infof("Accessed URL successfully: %s", link)
 			}
-			log.Infof("Accessed URL successfully: %s", resolved)
-		}(resolved)
-	})
+		}(link)
+	}
+
 	wg.Wait()
-	return result, nil
 }
 
 func ContainsString(list []string, target string) bool {
