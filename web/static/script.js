@@ -13,7 +13,7 @@ async function analyzeUrl() {
     }
 
     try {
-        const response = await fetch("http://localhost:8080/analyze-url", {
+        const response = await fetch("/analyze-url", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -88,7 +88,7 @@ async function login() {
     }
 
     try {
-        const response = await fetch("http://localhost:8080/login", {
+        const response = await fetch("/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

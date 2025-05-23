@@ -19,8 +19,8 @@ func NewServer(port string) *Server {
 	mux.Handle("/", http.HandlerFunc(handler.RootHandler))
 	mux.Handle("/analyze.html", utils.AuthMiddleware(http.HandlerFunc(handler.AnalyzePageHandler)))
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
-	mux.Handle("/analyze-url", utils.CORSMiddleware(utils.LoggingMiddleware(http.HandlerFunc(handler.WebPageAnalyzingHandler))))
-	mux.Handle("/login", utils.CORSMiddleware(utils.LoggingMiddleware(http.HandlerFunc(handler.LoginHandler))))
+	mux.Handle("/analyze-url", utils.LoggingMiddleware(http.HandlerFunc(handler.WebPageAnalyzingHandler)))
+	mux.Handle("/login", utils.LoggingMiddleware(http.HandlerFunc(handler.LoginHandler)))
 
 	return &Server{
 		httpServer: &http.Server{
