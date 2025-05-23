@@ -43,3 +43,32 @@ func WebPageAnalyzingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req model.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Username == "" || req.Password == "" {
+		http.Error(w, "Invalid request: both username and password are required", http.StatusBadRequest)
+		return
+	}
+
+	loginService := service.GetLoginService()
+	response := model.LoginResponse{}
+
+	if loginService.ValidateCredentials(req.Username, req.Password) {
+		response.Status = "success"
+		w.WriteHeader(http.StatusOK)
+	} else {
+		response.Status = "unauthorized"
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Error encoding response. "+err.Error(), http.StatusInternalServerError)
+	}
+}

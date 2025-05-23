@@ -3,8 +3,9 @@ package main
 import (
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"os"
+	"strconv"
 	"web-analyzer/internal/handler"
+	"web-analyzer/pkg/config"
 	"web-analyzer/pkg/logger"
 	"web-analyzer/pkg/utils"
 )
@@ -19,6 +20,7 @@ func NewServer(port string, log *logrus.Logger) *Server {
 	mux.Handle("/", http.HandlerFunc(handler.RootHandler))
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 	mux.Handle("/analyze-url", utils.CORSMiddleware(utils.LoggingMiddleware(http.HandlerFunc(handler.WebPageAnalyzingHandler))))
+	mux.Handle("/login", utils.CORSMiddleware(utils.LoggingMiddleware(http.HandlerFunc(handler.LoginHandler))))
 
 	return &Server{
 		httpServer: &http.Server{
@@ -30,15 +32,19 @@ func NewServer(port string, log *logrus.Logger) *Server {
 
 func main() {
 	logger.ConfigureLogger()
-
-	port := os.Getenv("WEB_ANALYZER_PORT")
-	if port == "" {
-		port = "8080"
+	configurations, err := config.LoadConfig()
+	if err != nil {
+		logger.Log.Errorf("Error loading config: %v", err)
 	}
 
-	server := NewServer(port, logger.Log)
+	port := configurations.ServerPort
+	if port == 0 {
+		port = 8080
+	}
 
-	logger.Log.Infof("Server starting on port %s...", port)
+	server := NewServer(strconv.Itoa(port), logger.Log)
+
+	logger.Log.Infof("Server starting on port %s...", strconv.Itoa(port))
 	if err := server.httpServer.ListenAndServe(); err != nil {
 		logger.Log.WithError(err).Fatal("Failed to start the server")
 	}

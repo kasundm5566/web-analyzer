@@ -6,6 +6,7 @@ LoggingMiddleware is a middleware that logs incoming HTTP requests and their res
 
 import (
 	"bytes"
+	"io"
 	"net/http"
 	"time"
 	"web-analyzer/pkg/logger"
@@ -16,7 +17,9 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		log := logger.Log
 
 		// Log the incoming request
-		log.Infof("Request: Method=[%s], Url=[%s], RemoteAddr=[%s]", r.Method, r.URL.String(), r.RemoteAddr)
+		bodyBytes, _ := io.ReadAll(r.Body)
+		log.Infof("Request: Method=[%s], Url=[%s], Body=[%s], RemoteAddr=[%s]", r.Method, r.URL.String(), string(bodyBytes), r.RemoteAddr)
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore the body for further processing
 
 		// Capture the response
 		rec := &responseRecorder{ResponseWriter: w, statusCode: http.StatusOK, body: &bytes.Buffer{}}

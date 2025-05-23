@@ -30,8 +30,7 @@ The app is built using GoLang.
 
 ## Setup
 
-The default server port is 8080. You can change it by modifying the `WEB_ANALYZER_PORT` environment variable
-in the `.env` file or environment variables (Windows).
+The default server port is 8080. You can change it by modifying the `server_port` of the `config.json`.
 
 * ### Using GO
 
@@ -79,6 +78,39 @@ in the `.env` file or environment variables (Windows).
     "url": "https://maze.co/guides/content-testing/"
 }'`
 
+Sample response:
+
+```json
+{
+  "htmlVersion": "HTML5",
+  "pageTitle": "Content Testing For UX: From Copy to Conversion | Maze",
+  "numberOfHeadings": 28,
+  "numberOfInternalLinks": 39,
+  "numberOfExternalLinks": 8,
+  "numberOfInaccessibleLinks": 2,
+  "inaccessibleLinks": [
+    "https://www.linkedin.com/in/kate-varga-65aa0918b/",
+    "https://www.linkedin.com/in/vaidapakulyte/"
+  ],
+  "containsLoginForm": false
+}
+```
+
+## Sample cURL for the login request
+
+`curl --location 'localhost:8080/login' \
+--header 'Content-Type: application/json' \
+--data '{
+    "username": "user",
+    "password": "password"
+}'`
+
+```json
+{
+  "status": "success"
+}
+```
+
 ---
 
 ## Limitations
@@ -109,6 +141,7 @@ in the `.env` file or environment variables (Windows).
 - Implement a more sophisticated method for detecting login forms.
 - Add support for analyzing other types of content (e.g., images, videos, etc.).
 - Add authentication mechanism to the endpoint.
+- For the login, currently it is using an in-memory database. It can be improved by using a proper database.
 
 ---
 
