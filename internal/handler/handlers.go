@@ -13,7 +13,7 @@ import (
 )
 
 func RootHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "web/static/index.html")
+	http.ServeFile(w, r, "web/static/login.html")
 }
 
 func WebPageAnalyzingHandler(w http.ResponseWriter, r *http.Request) {
