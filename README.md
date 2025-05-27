@@ -46,7 +46,7 @@ The default server port is 8080. You can change it by modifying the `server_port
 
     * #### Run the application:
 
-      `go run main.go`
+      `go run ./cmd/webanalyzer/main.go`
 
       Access the web interface at http://localhost:8080
 
