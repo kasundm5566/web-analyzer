@@ -119,7 +119,7 @@ func FetchContentAsString(urlStr string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	log.Infof("Created cache file: %s", fileName)
+	log.Infof("Created cache file: %s for the url: %s", fileName, urlStr)
 
 	return fullHtml, nil
 }
